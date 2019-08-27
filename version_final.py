@@ -6,7 +6,7 @@ import math
 
 
 
-def reverse(turn):
+def reverse(turn): #возвращает обратный данному ход. нужен для исключения его из возможных
     return { 'up':'down',
              'down':'up',
              'left':'right',
@@ -14,7 +14,7 @@ def reverse(turn):
              None:'None',
              'None':'None'}[turn]
 
-def is_inside(pos):
+def is_inside(pos): #проверка на принадлежность клетки карте
     if ((pos[0]>=0)and
         (pos[0]<wx)and
         (pos[1]>=0)and
@@ -37,7 +37,7 @@ def str_to_move(turn):
              'left':(-1,0),
              'right':(1,0)}[turn]
 
-def valid_turns(pos, prev = 'None', way = '',way_l = [],wx = 31, wy = 31):
+def valid_turns(pos, prev = 'None', way = '',way_l = [],wx = 31, wy = 31): #выдаёт разрешенные ходы
     turns = ['up','right','down','left']
 
     up =    (pos[0],pos[1]+1)
@@ -45,11 +45,11 @@ def valid_turns(pos, prev = 'None', way = '',way_l = [],wx = 31, wy = 31):
     left =  (pos[0]-1,pos[1])
     right = (pos[0]+1,pos[1])
 
-    if reverse(prev) in turns:
+    if reverse(prev) in turns:       #убираем обратный ход
         turns.remove(reverse(prev))
 
     t_w = []
-    if way != []:
+    if way != []:                           #отсечение возможных ходов так, чтобы путь получался только прямоугольниками
         if ('u' in way)and(way[-1]!='u'):
             t_w.append('up')
         if ('r' in way)and(way[-1]!='r'):
@@ -60,7 +60,7 @@ def valid_turns(pos, prev = 'None', way = '',way_l = [],wx = 31, wy = 31):
             t_w.append('left')
       
 
-    if ('up' in turns)and((pos[1] == wy-1)or(up in way_l)):
+    if ('up' in turns)and((pos[1] == wy-1)or(up in way_l)):     #убираем ходы, ведущие за пределы карты и на свой хвост
         turns.remove('up')
     if ('right' in turns)and((pos[0] == wx-1)or(right in way_l)):
         turns.remove('right')
@@ -69,19 +69,19 @@ def valid_turns(pos, prev = 'None', way = '',way_l = [],wx = 31, wy = 31):
     if ('left' in turns)and((pos[0] == 0)or(left in way_l)):
         turns.remove('left')
 
-    for turn in t_w:
-        if turn in turns:
+    for turn in t_w:                   #убираем ходы, получаемые для отсечения
+        if turn in turns: 
             turns.remove(turn)
 
     return turns
 
-def connected(Shells,Way):
+def connected(Shells,Way):          #проверка на то, что бот присоединён к своей территории
     if (len(Way)==0):
         return True
     check = False
     for Shell in Shells:
         for point in Way:
-            if point in Shell:
+            if point in Shell:     #если хоть одна клетка пути находится в окружении территории - присоединён
                 check = True
                 break
         if check ==True:
@@ -89,17 +89,17 @@ def connected(Shells,Way):
     return check
 
 
-def shells(Ter):
+def shells(Ter):           #возвращает массив из связных окружений территории
     S = []
 
     T = set(Ter)
     i=-1
-    while len(T)>0:
+    while len(T)>0:         #пока вся территория не закончится
         i+=1
-        S.append(set([]))
+        S.append(set([]))   #добавим новый элемент в массив
         seed = T.pop()
         removing = set([seed])
-        while len(removing)>0:
+        while len(removing)>0:  #и будем заполнять его связными клетками
             point = removing.pop()
             T.discard(point)
             adding = [(point[0]-1,point[1]-1),
@@ -110,7 +110,7 @@ def shells(Ter):
                       (point[0]+1,point[1]  ),
                       (point[0]+1,point[1]-1),
                       (point[0]  ,point[1]-1)]
-            for add in adding:
+            for add in adding:      #проверяем все клетки в радиусе 1, добавляем их в очередь на удаление
                 if ((add in T)and
                     (add not in removing)):
                     removing.add(add)
@@ -122,16 +122,17 @@ def shells(Ter):
                       (point[0]+1,point[1]+1),
                       (point[0]+1,point[1]  ),
                       (point[0]+1,point[1]-1),
-                      (point[0]  ,point[1]-1)]
+                      (point[0]  ,point[1]-1)]   #(да, этот кусок кода полностью повторяет предыдущий. раньше они отличались,)
+                                                 #(а когда поправил баг не заметил, что они дублируют друг-друга)
             for a in adding:
                 if ((a not in S[i])and
                     (a not in Ter)and
                     (a not in removing)):
-                    S[i].add(a)
+                    S[i].add(a)             #и если это не клетки территории а соседние клетки, то добавляем их в компоненту связности
     return S
     
 
-def debug_view(Ter,Shells,Way,lists = []):
+def debug_view(Ter,Shells,Way,lists = []):   #выдает рисунок в консоли
     
     N=len(lists)+1
     line = ''
@@ -176,7 +177,7 @@ def debug_view(Ter,Shells,Way,lists = []):
     print(line)
     print('')
 
-def last_fill(Ter,Shells,Way):
+def last_fill(Ter,Shells,Way):   #возвращает все клетки, соседние с компонентой "территория и путь"
     wayshell = shells(Way)[0]
     I = []
     supershell = set([])
@@ -194,7 +195,7 @@ def last_fill(Ter,Shells,Way):
     
     
 
-def new_fill(Ter,Shells,Way):
+def new_fill(Ter,Shells,Way):     #закраска
     #tim = time.perf_counter_ns()
     #app = 0
     #rem = 0
@@ -224,8 +225,8 @@ def new_fill(Ter,Shells,Way):
 ##                    #app+=1
 
     #убираем внешнюю оболочку
-    if len(W)>0:
-        minx = wx
+    if len(W)>0:        #В W сейчас находится все точки окрестные нужной нам территории, 
+        minx = wx       #так что можно выбрать любую из них с минимальной координатой, например по х
         
         for point in W:
             minx = min(minx,point[0])
@@ -282,14 +283,14 @@ def new_fill(Ter,Shells,Way):
                         
     return F#,str(Way),str(Ter),app,rem,tom-tim]
 
-def update(state,Players,Bonuses,Tick):
+def update(state,Players,Bonuses,Tick):    #обновляет всю информацию об игроках
     if state['type'] == 'tick':
         is_tick = True
         Tick = state['params']['tick_num']
         Bonuses = state['params']['bonuses']
         players = state['params']['players']
         for p in Players:
-            Players[p]['updat'] = False
+            Players[p]['updat'] = False    #если окажется, что игрок не обновился - значит он умер
         for p in players:
             if p not in list(Players.keys()):
                 Players.update(dict.fromkeys([p],{}))
@@ -345,7 +346,7 @@ def update(state,Players,Bonuses,Tick):
         Tick = 2500
     return [is_tick,Players,Bonuses,Tick]
 
-def str_to_int(turn):
+def str_to_int(turn):    #эта и следующая функция нужны для переосознания пути в число
     return { 'None':0,
              '':0,
              'N':0,
@@ -468,7 +469,7 @@ def astar(Player,wx,wy):
 
     return A
 
-def Construct_Enemy(Players,wx,wy):
+def Construct_Enemy(Players,wx,wy):   #массив с временем достижимости врага
     E = []
     for p in list(Players.keys()):
         if p != 'i':
@@ -564,27 +565,27 @@ def Construct_Tree(Pos,
     while (uslovie): #пока не ясно что конкретно. пока есть возможность строить пути
         c+=1
         tim = time.time()
-        turnout = False
+        turnout = False  #условие на насильное завершение этой ветви
         
         if len(way_s)>0:
             check = True
             for point in way_l:
                 if point not in Ter:
                     if ((enemy[point[0]][point[1]] < TimeNeed+1)):
-                        check = False
+                        check = False #проверка пути на безопасность
                         break
             #tom = time.perf_counter_ns()
             #Time[0]+=tom-tim
             #tim = time.perf_counter_ns()
             if ((check == True)and
-                #('0' in way_i)and
-                #('1' in way_i)):
-                (way_i[-1] == '1')):
+                #('0' in way_i)and  #тут была проверка на то, что путь выходит за свою территорию, но я вынес её отдельно
+                #('1' in way_i)):   #а это оказалось не нужно. тем более, что можно отрезать от территории
+                (way_i[-1] == '1')): 
                 counter +=1
                 turnout = True
                 fill = set([])
                 newpoints = points
-                if ('0' in way_i):
+                if ('0' in way_i):  #а вот и проверка на выход из своей земли. тут же будет и закраска и подсчёт очков
                     fill = new_fill(Ter,Shells,way_l)
                     onlyfill = fill - set(way_l)
                     of1 = onlyfill & ter1
@@ -615,9 +616,9 @@ def Construct_Tree(Pos,
                     if (slo in fill)or(slo in way_l):
                         points = 0 #если попадётся замедление на закрашиваемой территории, то снижаем награду до минимума
                 newpoints = newpoints/(len(way_l)+1)
-                if is_connected == False:
+                if is_connected == False:  #если я отделён от своей территории, то мне нужно возвращаться и не важны очки
                     newpoints = 5
-                if (newpoints > gain):
+                if (newpoints > gain):  #если очков получу больше
                     gain = newpoints
                     gainway = []
                     ssss = way_s
@@ -628,7 +629,7 @@ def Construct_Tree(Pos,
                     #Time[1]+=tom-tim
                     #tim = time.perf_counter_ns()
                 if (newpoints == gain)and(is_connected == True):
-                    if len(ssss)>=len(way_s):
+                    if len(ssss)>=len(way_s):  #если путь короче при равном числе очков
                         iks = random.randint(0,10)
                         if (len(ssss)>len(way_s) or (iks == 10)):#попытка слегка срандомизировать поиски путей
                             gainway = []
@@ -647,7 +648,7 @@ def Construct_Tree(Pos,
         tom = time.time()
         TIME[1] += tom-tim
         tim = time.time()
-        valid = valid_turns(pos_c, prev, way_s, way_l, wx, wy)
+        valid = valid_turns(pos_c, prev, way_s, way_l, wx, wy)  #разрешенные ходы в этом узле
         turn = ''
         
         try:                    #попытка вытащить прошлое действие на этой же глубине
@@ -657,7 +658,7 @@ def Construct_Tree(Pos,
             
         while (len(valid)>0):
             turn = valid.pop(0)
-            if str_to_int(turn)>str_to_int(lastt):
+            if str_to_int(turn)>str_to_int(lastt):  #вот тут происходит восприятие пути как числа и разрешается только следующее число
                 if turn[0] != lastt:
                     break
         if turn != '':
@@ -670,8 +671,8 @@ def Construct_Tree(Pos,
         tom = time.time()
         TIME[2]+=tom-tim
         tim = time.time() 
-        if turn != '': #turn in
-            TimeNeed += (30/Speed[depth]/6)
+        if turn != '': #turn in  - погружение на уровень глубже
+            TimeNeed += (30/Speed[depth]/6) #требуемое время. между прочим, только что понял что я не учитываю возможности самому подобрать бонус скорости
             T += int (30/Speed[depth])
             depth +=1
             
@@ -682,7 +683,7 @@ def Construct_Tree(Pos,
             
             prev  = turn
             way_s+=turn[0]
-            points += secret[pos_c[0]][pos_c[1]]
+            points += secret[pos_c[0]][pos_c[1]]  #тут отдельно считаются очки от потенциального поля
             if pos_c in Ter:
                 way_i+='1'
             else:
@@ -692,7 +693,7 @@ def Construct_Tree(Pos,
         TIME[3]+=tom-tim
         tim = time.time() 
                 
-        if (turn == '')or(turnout == True): #turn out
+        if (turn == '')or(turnout == True): #turn out - возвращение на уровень вверх
             depth -=1
             if depth == -1:
                 uslovie = False
@@ -727,10 +728,10 @@ def Construct_Tree(Pos,
     #debug_view(Ter,Shells,gainway,[Ter5])
     return [len(gainway),gainway,ssss,gain,[counter,c],iiii]
 
-def Construct_Tree_Home(Pos,
-                   Prev,
-                   Ter,
-                   Way,
+def Construct_Tree_Home(Pos,   #почти такая же функция, как и предыдущая, но тут нет проверки на опасность пути
+                   Prev,        #и ищет только наикратчайший путь
+                   Ter,         #смысл в том, что предыдущая функция не может найти ни 1 пути, если внезапно путь стал опасным
+                   Way,         #(например, враг дошел до своей территории, у него исчез хвост и он может добраться до тебя быстрее)
                    enemy,
                    dist,
                    Bonuses,
@@ -910,7 +911,7 @@ def Construct_Tree_Home(Pos,
     #debug_view(Ter,Shells,gainway,[Ter5])
     return [len(gainway),gainway,ssss,gain,[counter,c],iiii]
 
-def brain_turns(pos,prev,way,enemies):
+def brain_turns(pos,prev,way,enemies):   #проверка "на дурака" - выкидываем из возможных те ходы, где враг может столкнуться с нами
     turns = {'up','right','down','left'}
 
     turns.discard(reverse(prev))
@@ -1065,7 +1066,7 @@ while True:
     
     Tick = time.time()
     [is_tick,Players,Bonuses,tick] = update(json.loads(state),Players,Bonuses,tick)
-    if full_time > tick_time*tick:
+    if full_time > tick_time*tick:  #маленький грааль на динамическую глубину просчёта, в зависимости от затрат времени
         depth_time -=1
     else:
         depth_time +=1
@@ -1075,9 +1076,9 @@ while True:
     if depth_time >20:
         depth_time = 20
         
-    enemy = Construct_Enemy(Players,wx,wy)
+    enemy = Construct_Enemy(Players,wx,wy)   #заполняем карту достижимости
     
-    ter1 = set([])
+    ter1 = set([])  #делим территории по стоимости
     ter5 = set([])
     for x in range(wx):
         for y in range(wy):
@@ -1089,7 +1090,7 @@ while True:
                 ter5.add(point)
 
     try:
-        secret= holy_grail(ter5)
+        secret= holy_grail(ter5)  #заполняем потенциальное поле
     except:
         secret = []
         for x in range(wx):
@@ -1097,14 +1098,14 @@ while True:
             for y in range(wy):
                 secret[x].append(1)
 
-    last4points.append(Players['i']['posit'])
-    if len(last4points)>3:
+    last4points.append(Players['i']['posit'])  #снижаем награду за последние 4 клетки, где был бот - борюсь со стоянием "на месте"
+    if len(last4points)>3:                      # иногда бот просто бегал по квадрату 2х2 и думал, что набирает очки
         last4points.pop(0)
 
     for point in last4points:
         secret[point[0]][point[1]] = 0
     
-    S = Construct_Tree(Players['i']['posit'],
+    S = Construct_Tree(Players['i']['posit'],   #генерируем путь
                        Players['i']['direc'],
                        Players['i']['terri'],
                        Players['i']['lines'],
@@ -1118,15 +1119,15 @@ while True:
     
     ii = ''
     mode = ''
-    if S[2]!= '':
+    if S[2]!= '': #если ход не пустой, то всё хорошо
         cmd = short_to_str(S[2][0])
         points = S[3]
         ii = S[5]
         mode = 'construct'
         
-    if S[2] == '':
-        try:
-            S = Construct_Tree_Home(Players['i']['posit'],
+    if S[2] == '': #если ход пустой
+        try:        #попробуем сделать небезопасный путь домой
+            S = Construct_Tree_Home(Players['i']['posit'],  
                        Players['i']['direc'],
                        Players['i']['terri'],
                        Players['i']['lines'],
@@ -1141,7 +1142,7 @@ while True:
             points = S[3]
             ii = S[5]
             mode = 'home'
-        except:
+        except: #если и тут не вышло, то идём по случайным доступным ходам
             try:
                 en = []
                 for p in list(Players.keys()):
@@ -1149,10 +1150,10 @@ while True:
                         en.append(Players[p]['posit'])
                         
                 cmd = random.choice(brain_turns(Players['i']['posit'],Players['i']['direc'],Players['i']['lines'],en))
-                mode = 'brained'
+                mode = 'brained' #безопасный случайный ход
             except:
                 cmd = random.choice(valid_turns(Players['i']['posit'],Players['i']['direc'],'',Players['i']['lines'],wx,wy))
-                mode = 'random'
+                mode = 'random'  #совсем случайный
             points = 0
 
     en = []
@@ -1164,7 +1165,7 @@ while True:
     if cmd not in brain:
         cmd = random.choice(brain)
         mode = 'ultrabrain'
-        points = 0
+        points = 0  #если выданный ход не безопасный, то меняем его
         
         
     Tock = time.time()
